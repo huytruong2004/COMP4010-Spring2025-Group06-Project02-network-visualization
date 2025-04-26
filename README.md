@@ -34,6 +34,8 @@ We will use our teammate's virtual private server as the data source for this pr
 + These information will then be written in a Redis key-value database store, for the FastAPI server to query.
 + Our FastAPI backend server will exposes the APIs for client R code.
 
+Also, because this project is aimed to show how "reachable" our virtual private server to the attackers server, a list of IPs which we are using **will be excluded in the data gathering**.
+
 ## Data Dictionary 
 
 For the visualization of the R code, we will use the following table schema, where each row is a single network packet. 

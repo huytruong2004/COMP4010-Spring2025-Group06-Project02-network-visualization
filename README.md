@@ -12,7 +12,7 @@ This project showcases the ability of R to do active & real-time network monitor
 
 With the blooming of cloud services around the world, Virtual private server (VPS) are increasingly popular among developers or whoever interested in self-hosting something that help & comfort their daily digital lifes. Personal websites, game server, and even self-hosted virtual private network (VPN) are all hosted in personal cloud instance. This makes the life of digital nomads, developers, and even start-ups around the world much more simpler by not necessarily having an expensive server rack in their home or office. 
 
-However, virtual private cloud is facing a crutial and also sadly fact: they are very rewardful targets to cybercriminal. With the VPS's public IP, which is easy to get from DNS records of the cloud services, attackers can easily scan for opening services by tools like [nmap](https://nmap.org/), and even deploying automatic exploits. For example, just opening a simple HTTP server in Python, we got "visit" from a friend in... Lithuania? 
+However, virtual private cloud is facing a crutial and also sadly fact: they are very rewardful targets to cybercriminal. With the VPS's public IP, which is easy to get from DNS records of the cloud services, attackers can easily scan for opening services by tools like [nmap](https://nmap.org/), and even deploying automatic exploits. For example, just opening a simple HTTP server, within 5 minutes, we got "visit" from a friend in... Lithuania? 
 
 ![](./attachments/scan.png)
 

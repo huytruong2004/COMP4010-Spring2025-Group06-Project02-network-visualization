@@ -19,8 +19,13 @@ However, virtual private cloud is facing a crutial and also sadly fact: they are
 
 One of our teammate faced an [incident](https://h114mx001.netlify.app/posts/how-we-got-hacked-while-ctfing/) before, where his team got hacked by cybercriminal, got a cryptominer run intensively in their clusters, just because they did not secure their network, with assumption in mind is **only they can access the VPS**. From this inspiration, we selected this project: using open-source network monitoring tool [Wireshark](https://www.wireshark.org/), combining with the power of R in informative visualization, to provide a dashboard of active threats against VPS, from evil outsiders.
 
-The target of this project is:
-1. Showing a proof-of-concept on how visualization could help in network monitoring. 
+## Objectives
+
+1. Showing a proof-of-concept on how visualization could help in network monitoring using `flexdashboard` and `shiny`.
+    - When during the day does malicious traffic spike? - A time-series line chart of `packet counts` and another time-series line chart of `length`, both have time interval input (1D, 7D, 30D)
+    - Which countries are hitting my VPS the most right now? A choropleth on world map show `source_country` and `length` with metric switch (by count or total bytes), with time interval input (1D, 7D, 30D)
+    - What are the top talkers and their detailed traffic over time? – A horizontal bar chart showing top `source_ip` by total traffic, with a Top-N dropdown (Top 5, Top 10, Top 20) and a `protocol` filter dropdown. Click on a bar to show a table below with all packets from that IP over time (including `timestamp`, `protocol`, and `length`)
+
 2. Raising the awareness of people on the current threat scenario, as well as putting security of the virtual private cloud in mind.
 
 ## Data Gathering & Setup 
@@ -49,6 +54,18 @@ For the visualization of the R code, we will use the following table schema, whe
 |length                    |integer   |Length in bytes of the packet |
 |information               |string    |First 100 bytes of the information of the packet |
 
+## Plan
 
-## Weekly plan 
+### Infrastructure Setup
 
+- [x] Set up Wireshark on the VPS for traffic capture
+- [x] Set up Redis database to store processed data
+
+### Visualization
+
+- [ ] Build dashboard with time-series charts for traffic monitoring
+- [ ] Create interactive world map showing traffic by country
+- [ ] Implement top talkers bar chart with filtering options
+- [ ] Add click-through functionality for detailed packet analysis
+
+## Presentation and Report

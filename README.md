@@ -16,8 +16,16 @@ However, virtual private cloud is facing a crutial and also sadly fact: they are
 
 ![](./attachments/scan.png)
 
+From these actively running vulnerability scanners, cyber attacks could deploy thousands forms of attacks:
 
-One of our teammate faced an [incident](https://h114mx001.netlify.app/posts/how-we-got-hacked-while-ctfing/) before, where his team got hacked by cybercriminal, got a cryptominer run intensively in their clusters, just because they did not secure their network, with assumption in mind is **only they can access the VPS**. From this inspiration, we selected this project: using open-source network monitoring tool [Wireshark](https://www.wireshark.org/), combining with the power of R in informative visualization, to provide a dashboard of active threats against VPS, from evil outsiders.
+- Ransomware
+- Cryptominer
+- Botnet for future Distributed Denial-of-service attacks
+- ... many many more :(
+
+One of our teammate faced an [incident](https://h114mx001.netlify.app/posts/how-we-got-hacked-while-ctfing/) before, where his team got hacked by cybercriminal, got a cryptominer run intensively in their clusters, just because they did not secure their network, with assumption in mind is **only they can access the VPS**. 
+
+From this inspiration, we selected this project: using open-source network monitoring tool [Wireshark](https://www.wireshark.org/), combining with the power of R in informative visualization, to provide a dashboard of active threats against VPS, from evil outsiders.
 
 ## Objectives
 
@@ -50,9 +58,11 @@ For the visualization of the R code, we will use the following table schema, whe
 |timestamp                 |integer   |UNIX timestamp of the trafifc |
 |source_ip                 |string    |IPv4 address of Source |
 |source_country            |string    |The country where source_ip comes from, based on geolocation |
+|destination_port          |integer   |The destination port that `source_ip` connects to. |
 |protocol                  |string    |Protocol used by the packet | 
 |length                    |integer   |Length in bytes of the packet |
-|information               |string    |First 100 bytes of the information of the packet |
+
+The example of upcoming CSV is in [here](./src/parser/output.csv).
 
 ## Plan
 

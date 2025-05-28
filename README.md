@@ -32,7 +32,7 @@ From this inspiration, we selected this project: using open-source network monit
 1. Showing a proof-of-concept on how visualization could help in network monitoring using `flexdashboard` and `shiny`.
     - When during the day does malicious traffic spike? - A time-series line chart of `packet counts` and another time-series line chart of `length`, both have time interval input (1D, 7D, 30D)
     - Which countries are hitting my VPS the most right now? A choropleth on world map show `source_country` and `length` with metric switch (by count or total bytes), with time interval input (1D, 7D, 30D)
-    - What are the top talkers and their detailed traffic over time? – A horizontal bar chart showing top `source_ip` by total traffic, with a Top-N dropdown (Top 5, Top 10, Top 20) and a `protocol` filter dropdown. Click on a bar to show a table below with all packets from that IP over time (including `timestamp`, `protocol`, and `length`)
+    - What are the top `source_ip` and their detailed traffic over time? – A horizontal bar chart showing top `source_ip` by total traffic, with a Top-N dropdown (Top 5, Top 10, Top 20) and a `protocol` filter dropdown. Click on a bar to show a table below with all packets from that IP over time (including `timestamp`, `protocol`, and `length`)
 
 2. Raising the awareness of people on the current threat scenario, as well as putting security of the virtual private cloud in mind.
 

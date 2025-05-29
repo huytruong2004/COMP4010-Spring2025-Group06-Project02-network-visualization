@@ -1,0 +1,494 @@
+/* Custom CSS for Network Security Dashboard */
+
+/* Color Variables */
+:root {
+  --bg-primary: #0a0e27;
+  --bg-secondary: #1a1f3a;
+  --accent: #00d4ff;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+  --success: #27ae60;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --grid: #2a2f4a;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Roboto', Arial, sans-serif;
+}
+
+/* Shiny Dashboard Overrides */
+.content-wrapper, .right-side {
+  background-color: var(--bg-primary) !important;
+}
+
+.main-header .logo {
+  background-color: var(--bg-secondary) !important;
+  color: var(--accent) !important;
+  font-weight: bold;
+}
+
+.main-header .navbar {
+  background-color: var(--bg-secondary) !important;
+}
+
+.main-sidebar {
+  background-color: var(--bg-secondary) !important;
+}
+
+.sidebar-menu > li > a {
+  color: var(--text-primary) !important;
+}
+
+.sidebar-menu > li:hover > a,
+.sidebar-menu > li.active > a {
+  background-color: var(--bg-primary) !important;
+  border-left: 3px solid var(--accent);
+}
+
+/* Box Styling */
+.box {
+  background-color: var(--bg-secondary) !important;
+  border-top: 3px solid var(--accent) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.box-header {
+  color: var(--accent) !important;
+  border-bottom: 1px solid var(--grid);
+}
+
+.box-title {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+/* Well Panel */
+.well {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--grid) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Buttons */
+.btn {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--accent) !important;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 212, 255, 0.3);
+}
+
+.btn-primary {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+}
+
+/* Input Controls */
+.form-control,
+.selectize-input,
+.selectize-dropdown {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--grid) !important;
+}
+
+.form-control:focus,
+.selectize-input.focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+}
+
+/* Sliders */
+.irs-bar,
+.irs-bar-edge,
+.irs-single,
+.irs-from,
+.irs-to {
+  background-color: var(--accent) !important;
+}
+
+.irs-line,
+.irs-grid-pol {
+  background-color: var(--grid) !important;
+}
+
+/* Date Range Picker */
+.daterangepicker {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--grid) !important;
+}
+
+.daterangepicker td.active,
+.daterangepicker td.active:hover {
+  background-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+}
+
+/* Network Visualization */
+.vis-network {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--grid) !important;
+}
+
+.vis-tooltip {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--accent) !important;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Data Tables */
+.dataTables_wrapper {
+  color: var(--text-primary) !important;
+}
+
+.dataTable {
+  background-color: var(--bg-secondary) !important;
+}
+
+.dataTable thead {
+  background-color: var(--bg-primary) !important;
+  color: var(--accent) !important;
+}
+
+.dataTable tbody tr {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dataTable tbody tr:hover {
+  background-color: var(--bg-primary) !important;
+}
+
+.dataTables_filter input,
+.dataTables_length select {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--grid) !important;
+}
+
+/* Plotly */
+.plotly .modebar {
+  background-color: transparent !important;
+}
+
+.plotly .modebar-btn {
+  color: var(--text-secondary) !important;
+}
+
+.plotly .modebar-btn:hover {
+  color: var(--accent) !important;
+}
+
+/* Dygraphs */
+.dygraph-legend {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--grid) !important;
+}
+
+/* Loading Spinner */
+.load-container {
+  background-color: rgba(10, 14, 39, 0.8) !important;
+}
+
+/* Threat Level Indicators */
+.threat-high {
+  color: var(--danger) !important;
+  font-weight: bold;
+}
+
+.threat-medium {
+  color: var(--warning) !important;
+  font-weight: bold;
+}
+
+.threat-low {
+  color: var(--success) !important;
+  font-weight: bold;
+}
+
+/* Value Boxes */
+.small-box {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.small-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.small-box.bg-aqua {
+  background-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+}
+
+.small-box.bg-red {
+  background-color: var(--danger) !important;
+}
+
+.small-box.bg-yellow {
+  background-color: var(--warning) !important;
+}
+
+.small-box.bg-green {
+  background-color: var(--success) !important;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 212, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Accessibility Improvements - Phase 6 */
+
+/* High Contrast Mode */
+.high-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --accent: #ffffff;
+  --danger: #ff0000;
+  --warning: #ffff00;
+  --success: #00ff00;
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --grid: #ffffff;
+}
+
+/* High contrast toggle button */
+.accessibility-controls {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--accent);
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.contrast-toggle,
+.font-size-toggle {
+  background-color: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  padding: 8px 12px;
+  margin: 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.contrast-toggle:hover,
+.font-size-toggle:hover {
+  background-color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.contrast-toggle:focus,
+.font-size-toggle:focus {
+  outline: 3px solid var(--warning);
+  outline-offset: 2px;
+}
+
+/* Large font mode */
+.large-fonts {
+  font-size: 120% !important;
+}
+
+.large-fonts .box-title {
+  font-size: 1.5em !important;
+}
+
+.large-fonts .btn {
+  font-size: 16px !important;
+  padding: 12px 18px !important;
+}
+
+.large-fonts .form-control {
+  font-size: 16px !important;
+  padding: 12px !important;
+}
+
+/* Enhanced Focus Styles for Keyboard Navigation */
+.btn:focus,
+.form-control:focus,
+.selectize-input.focus,
+input[type="checkbox"]:focus,
+input[type="radio"]:focus,
+.sidebar-menu > li > a:focus,
+.nav-tabs > li > a:focus,
+.pagination > li > a:focus {
+  outline: 3px solid var(--warning) !important;
+  outline-offset: 2px !important;
+  z-index: 1000;
+  position: relative;
+}
+
+/* Skip to content link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  padding: 8px;
+  text-decoration: none;
+  z-index: 10000;
+  border-radius: 0 0 4px 4px;
+  font-weight: bold;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Enhanced keyboard navigation for data tables */
+.dataTables_wrapper table.dataTable tbody tr:focus {
+  background-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+  outline: 2px solid var(--warning);
+}
+
+/* Enhanced keyboard navigation for network visualization */
+.vis-network:focus {
+  outline: 3px solid var(--warning);
+  outline-offset: 2px;
+}
+
+/* Improve tab order visibility */
+.nav-tabs > li.active > a {
+  background-color: var(--accent) !important;
+  color: var(--bg-primary) !important;
+  border-bottom: 3px solid var(--warning) !important;
+}
+
+/* Enhanced plotly accessibility */
+.plotly .modebar-btn:focus {
+  outline: 2px solid var(--warning) !important;
+  outline-offset: 1px !important;
+}
+
+/* Better visibility for form labels */
+label {
+  font-weight: bold !important;
+  color: var(--text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+/* Improved contrast for disabled elements */
+.btn:disabled,
+.form-control:disabled {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--grid) !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Enhanced error state visibility */
+.has-error .form-control {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 0.2rem rgba(231, 76, 60, 0.25) !important;
+}
+
+.has-error .control-label {
+  color: var(--danger) !important;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Ensure sufficient color contrast for all text */
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* Better focus indication for interactive elements */
+[role="button"]:focus,
+[tabindex]:focus {
+  outline: 3px solid var(--warning) !important;
+  outline-offset: 2px !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .box {
+    margin-bottom: 20px;
+  }
+  
+  .vis-network {
+    height: 400px !important;
+  }
+  
+  .accessibility-controls {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .large-fonts .btn {
+    font-size: 18px !important;
+    padding: 15px 20px !important;
+  }
+}
+
+/* Print styles for accessibility */
+@media print {
+  .accessibility-controls,
+  .sidebar,
+  .main-header {
+    display: none !important;
+  }
+  
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}

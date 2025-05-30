@@ -13,20 +13,11 @@ timelineUI <- function(id) {
         wellPanel(
           h4("Timeline Controls", style = "color: #00d4ff;"),
           
-          # Date range selector
-          dateRangeInput(
-            ns("date_range"),
-            "Date Range",
-            start = Sys.Date() - 7,
-            end = Sys.Date(),
-            max = Sys.Date()
-          ),
-          
           # Time interval
           selectInput(
             ns("time_interval"),
             "Aggregation",
-            choices = c("Hour" = "hour", "Day" = "day"),
+            choices = c("Minute" = "minute", "Hour" = "hour", "Day" = "day"),
             selected = "hour"
           ),
           
@@ -47,7 +38,7 @@ timelineUI <- function(id) {
           selectInput(
             ns("protocol_filter"),
             "Protocol",
-            choices = c("All" = "all", "TCP" = "TCP", "UDP" = "UDP"),
+            choices = c("All" = "all"),
             selected = "all"
           ),
           
@@ -56,6 +47,15 @@ timelineUI <- function(id) {
             ns("threat_threshold"),
             "Min Threat Score",
             min = 0, max = 10, value = 0, step = 1
+          ),
+          
+          # Threat score explanation
+          br(),
+          actionButton(
+            ns("threat_info"),
+            "How is Threat Score calculated?",
+            icon = icon("info-circle"),
+            style = "width: 100%; background-color: #2a2f4a; border-color: #00d4ff;"
           )
         )
       ),
@@ -112,14 +112,25 @@ timelineUI <- function(id) {
 timelineServer <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     
+    # Update protocol choices based on data
+    observe({
+      req(data())
+      protocols <- unique(data()$protocol)
+      protocols <- sort(protocols[!is.na(protocols)])
+      
+      updateSelectInput(
+        session,
+        "protocol_filter",
+        choices = c("All" = "all", setNames(protocols, protocols)),
+        selected = input$protocol_filter
+      )
+    })
+    
     # Reactive data filtering
     filtered_data <- reactive({
       req(data())
       
       df <- data()
-      
-      # Date range filter
-      df <- filter_by_date(df, input$date_range[1], input$date_range[2])
       
       # Protocol filter
       if (input$protocol_filter != "all") {
@@ -159,9 +170,10 @@ timelineServer <- function(id, data) {
       
       # Convert to time series format for dygraph
       ts_matrix <- data.frame(
-        datetime = ts_data$datetime,
-        value = ts_data[[metric_col]]
+        datetime = ts_data$datetime
       )
+      # Add column with dynamic name
+      ts_matrix[[metric_name]] <- ts_data[[metric_col]]
       
       # Create dygraph
       dygraph(ts_matrix, main = paste("Timeline:", metric_name)) %>%
@@ -265,6 +277,78 @@ timelineServer <- function(id, data) {
     class = "table-bordered table-striped"
     )
     
+    # Threat score explanation modal
+    observeEvent(input$threat_info, {
+      showModal(modalDialog(
+        title = div("Threat Score Calculation", style = "color: #00d4ff;"),
+        size = "m",
+        tags$style("
+          .modal-content {
+            background-color: #1a1f3a !important;
+            border: 1px solid #00d4ff;
+          }
+          .modal-header {
+            background-color: #0a0e27 !important;
+            border-bottom: 1px solid #2a2f4a;
+          }
+          .modal-body {
+            background-color: #1a1f3a !important;
+            color: #e0e0e0 !important;
+          }
+          .modal-footer {
+            background-color: #0a0e27 !important;
+            border-top: 1px solid #2a2f4a;
+          }
+          .close {
+            color: #00d4ff !important;
+            opacity: 0.8;
+          }
+          .close:hover {
+            opacity: 1;
+          }
+          .btn-default {
+            background-color: #2a2f4a !important;
+            color: #00d4ff !important;
+            border: 1px solid #00d4ff !important;
+          }
+          .btn-default:hover {
+            background-color: #00d4ff !important;
+            color: #0a0e27 !important;
+          }
+        "),
+        div(style = "color: #e0e0e0;",
+          h4("How Threat Scores are Calculated", style = "color: #00d4ff; margin-bottom: 20px;"),
+          p("Threat scores range from 0 (low) to 10 (high) based on:"),
+          tags$ul(style = "color: #e0e0e0;",
+            tags$li(tags$span("High-Risk Ports (+3 points):", style = "color: #00d4ff; font-weight: bold;"), 
+                   " SSH (22), Telnet (23), SMB (445), RDP (3389), SQL databases (1433, 3306, 5432)"),
+            tags$li(tags$span("Unusual Packet Sizes:", style = "color: #00d4ff; font-weight: bold;"), 
+                   " Large packets >10KB (+2), Very small packets <20 bytes (+1)"),
+            tags$li(tags$span("Protocol & Port:", style = "color: #00d4ff; font-weight: bold;"), 
+                   " TCP on privileged ports <1024 (+1)")
+          ),
+          br(),
+          p("Examples:", style = "color: #00d4ff; font-weight: bold;"),
+          tags$ul(style = "color: #e0e0e0;",
+            tags$li("Attack on SSH port (22) with large packet: 3 + 2 = ", 
+                   tags$span("5 points", style="color: #f39c12; font-weight: bold;")),
+            tags$li("Attack on RDP port (3389) with normal packet: ", 
+                   tags$span("3 points", style="color: #f39c12; font-weight: bold;")),
+            tags$li("Attack on high port with small packet: ", 
+                   tags$span("1 point", style="color: #27ae60; font-weight: bold;"))
+          ),
+          br(),
+          p(tags$span("Scores > 5", style="color: #e74c3c; font-weight: bold;"), 
+            " are considered high threat.", style = "color: #e0e0e0;")
+        ),
+        footer = tagList(
+          modalButton(
+            "Close",
+            icon = NULL
+          )
+        )
+      ))
+    })
     
   })
 }

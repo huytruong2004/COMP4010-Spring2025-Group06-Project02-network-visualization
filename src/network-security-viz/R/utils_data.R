@@ -2,9 +2,7 @@
 # Network Security Visualization Dashboard
 # Consolidated from utils_data.R and utils_network.R
 
-# =============================================================================
 # DATA LOADING AND VALIDATION
-# =============================================================================
 
 # Load and validate network data (simplified - no caching)
 load_network_data <- function(file_path) {
@@ -71,9 +69,7 @@ calculate_threat_score <- function(port, protocol, length) {
   return(pmin(score, 10))  # Cap at 10
 }
 
-# =============================================================================
 # DATA AGGREGATION (SIMPLIFIED)
-# =============================================================================
 
 # Aggregate data for time series
 aggregate_timeseries <- function(data, interval = "hour") {
@@ -113,9 +109,7 @@ aggregate_geographic <- function(data) {
   ), by = source_country][order(-attack_count)]
 }
 
-# =============================================================================
 # NETWORK ANALYSIS FUNCTIONS
-# =============================================================================
 
 # Convert flat packet data to network structure
 create_network_data <- function(packet_data, max_nodes = 100) {
@@ -197,10 +191,7 @@ cluster_by_country <- function(packet_data) {
   return(country_clusters)
 }
 
-# =============================================================================
 # FILTERING FUNCTIONS
-# =============================================================================
-
 # Filter data by date range
 filter_by_date <- function(data, start_date = NULL, end_date = NULL) {
   if (!is.null(start_date)) {

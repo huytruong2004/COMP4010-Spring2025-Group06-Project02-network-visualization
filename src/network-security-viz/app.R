@@ -10,11 +10,7 @@ ui <- dashboardPage(
   
   # Header
   dashboardHeader(
-    title = tags$span(
-      tags$img(src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiA3VjEyQzIgMTYuNSA0LjggMjAuNyAxMiAyMkMxOS4yIDIwLjcgMjIgMTYuNSAyMiAxMlY3TDEyIDJaIiBzdHJva2U9IiMwMGQ0ZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIiBmaWxsPSIjMDBkNGZmIi8+CjwvcMSdPg==",
-             height = "30px", style = "margin-right: 10px;"),
-      "VPS Security Monitor"
-    ),
+    title = "VPS Security Monitor",
     titleWidth = 300
   ),
   
@@ -108,7 +104,7 @@ ui <- dashboardPage(
             status = "primary",
             solidHeader = TRUE,
             width = 8,
-            plotOutput("overview_trend_chart", height = "300px")
+            plotOutput("overview_trend_chart", height = "420px")
           ),
           
           box(

@@ -263,10 +263,18 @@ networkServer <- function(id, data) {
         return(p("Node information not available", style = "color: #a0a0a0;"))
       }
       
+      # Get the actual attack count from the data
+      attack_count <- if (startsWith(node_info$label, "1") || startsWith(node_info$label, "2")) {
+        nrow(data()[source_ip == node_info$label])
+      } else {
+        # For port nodes
+        nrow(data()[destination_port == as.integer(gsub("Port ", "", node_info$label))])
+      }
+      
       tagList(
         h5(paste("Node:", node_info$label), style = "color: #00d4ff;"),
         p(paste("Group:", node_info$group)),
-        p(paste("Value:", node_info$value)),
+        p(paste("Attacks:", attack_count)),
         
         # Show related traffic if it's an IP node
         if (startsWith(node_info$label, "1") || startsWith(node_info$label, "2")) {
@@ -275,10 +283,24 @@ networkServer <- function(id, data) {
           
           if (nrow(related_traffic) > 0) {
             tagList(
-              h6("Recent Activity:", style = "color: #00d4ff;"),
-              p(paste("Total Attacks:", nrow(related_traffic))),
-              p(paste("Countries:", paste(unique(related_traffic$source_country), collapse = ", "))),
-              p(paste("Avg Threat Score:", round(mean(related_traffic$threat_score), 2)))
+              h6("Attack Details:", style = "color: #00d4ff;"),
+              p(paste("Origin Country:", paste(unique(related_traffic$source_country), collapse = ", "))),
+              p(paste("Avg Threat Score:", round(mean(related_traffic$threat_score), 2))),
+              p(paste("Data Volume:", scales::comma(sum(related_traffic$length)), "bytes"))
+            )
+          }
+        } else if (startsWith(node_info$label, "Port")) {
+          # Show details for port nodes
+          req(data())
+          port_num <- as.integer(gsub("Port ", "", node_info$label))
+          port_traffic <- data()[destination_port == port_num]
+          
+          if (nrow(port_traffic) > 0) {
+            tagList(
+              h6("Port Details:", style = "color: #00d4ff;"),
+              p(paste("Unique Attackers:", uniqueN(port_traffic$source_ip))),
+              p(paste("Protocols:", paste(unique(port_traffic$protocol), collapse = ", "))),
+              p(paste("Avg Threat Score:", round(mean(port_traffic$threat_score), 2)))
             )
           }
         }

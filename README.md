@@ -143,16 +143,4 @@ Additional features include:
 - Data loading with error handling and sample data fallback
 - Enhanced security-themed dark UI with custom styling
 
-### Data Requirements
-
-The dashboard expects a CSV file with network traffic data following this schema:
-- `timestamp`: UNIX timestamp
-- `source_ip`: IPv4 address 
-- `source_country`: Country of origin
-- `destination_port`: Target port
-- `protocol`: Network protocol
-- `length`: Packet size in bytes
-
-Data is available at `src/parser/output.csv`.
-
 ## Presentation and Report

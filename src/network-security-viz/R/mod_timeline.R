@@ -87,7 +87,7 @@ timelineUI <- function(id) {
           solidHeader = TRUE,
           width = 12,
           
-          dygraphOutput(ns("timeline_chart"), height = "400px")
+          dygraphOutput(ns("timeline_chart"), height = "560px")
         )
       )
     ),

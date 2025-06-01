@@ -10,6 +10,7 @@ networkUI <- function(id) {
       # Control panel
       column(3,
         wellPanel(
+          style = "height: 600px; overflow-y: auto;",
           h4("Network Controls", style = "color: #00d4ff;"),
           
           # Node filtering
@@ -31,7 +32,7 @@ networkUI <- function(id) {
           textInput(
             ns("node_search"),
             NULL,
-            placeholder = "Search IP, Port, or Country..."
+            placeholder = "Search IP or Port"
           ),
           
           # Filter chips
@@ -80,7 +81,7 @@ networkUI <- function(id) {
           solidHeader = TRUE,
           width = 12,
           
-          visNetworkOutput(ns("network_plot"), height = "500px")
+          visNetworkOutput(ns("network_plot"), height = "600px")
         )
       )
     ),

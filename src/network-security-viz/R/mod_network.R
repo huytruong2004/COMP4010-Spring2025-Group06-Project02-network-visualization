@@ -1,6 +1,5 @@
 # Network Module - Simplified
-# Network Security Visualization Dashboard  
-# Removed: complex layouts, advanced physics, complex clustering
+# Network Security Visualization Dashboard
 
 # UI function
 networkUI <- function(id) {
@@ -102,7 +101,7 @@ networkUI <- function(id) {
       )
     ),
     
-    # Node details (simplified)
+    # Node details
     fluidRow(
       column(12,
         box(
@@ -207,7 +206,7 @@ networkServer <- function(id, data) {
           highlightNearest = list(enabled = TRUE, degree = 1)
         ) %>%
         visInteraction(
-          navigationButtons = TRUE,
+          navigationButtons = FALSE,
           hover = TRUE,
           zoomView = TRUE,
           dragView = TRUE

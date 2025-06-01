@@ -1,6 +1,6 @@
 # COMP4010 Project 2 - Virtual Private Cloud Network Visualization 
 
-This project showcases the ability of R to do active & real-time network monitoring in virtual private server (VPS). 
+This project showcases the ability of R to do active & network monitoring in virtual private server (VPS). 
 
 ## Members
 
@@ -29,10 +29,11 @@ From this inspiration, we selected this project: using open-source network monit
 
 ## Objectives
 
-1. Showing a proof-of-concept on how visualization could help in network monitoring using `flexdashboard` and `shiny`.
-    - When during the day does malicious traffic spike? - A time-series line chart of `packet counts` and another time-series line chart of `length`, both have time interval input (1D, 7D, 30D)
-    - Which countries are hitting my VPS the most right now? A choropleth on world map show `source_country` and `length` with metric switch (by count or total bytes), with time interval input (1D, 7D, 30D)
-    - What are the top `source_ip` and their detailed traffic over time? – A horizontal bar chart showing top `source_ip` by total traffic, with a Top-N dropdown (Top 5, Top 10, Top 20) and a `protocol` filter dropdown. Click on a bar to show a table below with all packets from that IP over time (including `timestamp`, `protocol`, and `length`)
+1. Demonstrating comprehensive network security visualization using `shiny` and advanced R visualization libraries.
+    - **Threat monitoring**: Interactive dashboard overview with key security metrics, attack trends, and top attackers identification
+    - **Temporal analysis**: Dynamic time-series charts showing traffic patterns across multiple time intervals (minute, hour, day) with configurable metrics (attack count, data volume, unique IPs, threat scores)
+    - **Geographic threat intelligence**: Interactive world map choropleth visualization displaying attack origins by country with switchable metrics and detailed country statistics
+    - **Network topology analysis**: Advanced network graph showing IP-to-port attack relationships with intelligent filtering by threat level, node type, and geographic origin
 
 2. Raising the awareness of people on the current threat scenario, as well as putting security of the virtual private cloud in mind.
 
@@ -73,9 +74,83 @@ The example of upcoming CSV is in [here](./src/parser/output.csv).
 
 ### Visualization
 
-- [ ] Build dashboard with time-series charts for traffic monitoring
-- [ ] Create interactive world map showing traffic by country
-- [ ] Implement top talkers bar chart with filtering options
-- [ ] Add click-through functionality for detailed packet analysis
+- [x] Build comprehensive security dashboard with 4 main analysis views
+- [x] Implement interactive timeline analysis with dygraphs
+- [x] Create network graph visualization with advanced filtering
+- [x] Build geographic analysis with interactive world map
+- [x] Add threat scoring system and metrics
+- [x] Implement advanced filtering and search capabilities
+
+## Visualization Setup Guide
+
+### Prerequisites
+
+- **R** (version 4.0 or higher) - [Download from CRAN](https://cran.r-project.org/)
+- **RStudio** (recommended) - [Download from Posit](https://posit.co/downloads/)
+
+### Quick Start
+
+1. **Navigate to the visualization directory:**
+   ```bash
+   cd src/network-security-viz
+   ```
+
+2. **Install required R packages:**
+   ```bash
+   Rscript install_packages.R
+   ```
+   
+   This will automatically install all required packages including:
+   - `shiny`, `shinydashboard`, `shinyWidgets` - Dashboard framework
+   - `tidyverse`, `data.table`, `lubridate` - Data manipulation
+   - `visNetwork`, `dygraphs`, `plotly` - Advanced visualizations
+   - `DT`, `viridis`, `shinycssloaders` - Supporting packages
+
+3. **Run the application:**
+   ```bash
+   Rscript run_app.R
+   ```
+   
+   The dashboard will start at `http://127.0.0.1:8080` and automatically open in your browser.
+
+### Alternative Setup (Using RStudio)
+
+1. Open RStudio
+2. Set working directory to `src/network-security-viz`
+3. Run the installation script:
+   ```r
+   source("install_packages.R")
+   ```
+4. Launch the app:
+   ```r
+   shiny::runApp("app.R")
+   ```
+
+### Dashboard Features
+
+The visualization dashboard provides four comprehensive analysis views:
+
+- **Dashboard Overview**: Metrics with 6 key performance indicators (total attacks, unique attackers, threat levels, top countries/ports, data volume), recent attack trends chart, and top attackers table
+- **Timeline Analysis**: Interactive time-series visualization using dygraphs with configurable metrics (attack count, data volume, unique IPs, threat scores), time intervals (minute/hour/day), protocol filtering, and threat level thresholds
+- **Network Graph**: Advanced network visualization using visNetwork showing IP-to-port attack patterns, with filtering by node type, threat level, country, and smart search functionality
+- **Geographic Analysis**: Interactive world map using plotly choropleth displaying attack distribution by country, with metric switching and detailed country statistics table
+
+Additional features include:
+- Global time range filtering (24 hours, 7 days, 30 days, all time)
+- Advanced threat scoring system (0-10 scale based on target ports, packet sizes, and protocols)
+- Data loading with error handling and sample data fallback
+- Enhanced security-themed dark UI with custom styling
+
+### Data Requirements
+
+The dashboard expects a CSV file with network traffic data following this schema:
+- `timestamp`: UNIX timestamp
+- `source_ip`: IPv4 address 
+- `source_country`: Country of origin
+- `destination_port`: Target port
+- `protocol`: Network protocol
+- `length`: Packet size in bytes
+
+Data is available at `src/parser/output.csv`.
 
 ## Presentation and Report

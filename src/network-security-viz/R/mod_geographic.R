@@ -1,6 +1,5 @@
 # Geographic Module - Simplified
 # Network Security Visualization Dashboard
-# Replaces complex mod_geo_3d.R with simple country-level choropleth
 
 # UI function
 geographicUI <- function(id) {

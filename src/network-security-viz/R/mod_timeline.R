@@ -64,9 +64,7 @@ timelineUI <- function(id) {
             p(style = "color: #e0e0e0; margin: 5px 0;", 
               tags$span("•", style = "color: #00d4ff;"), " Blue: Actual data points"),
             p(style = "color: #e0e0e0; margin: 5px 0;", 
-              tags$span("•", style = "color: #ff6b6b;"), " Red: Filled gaps (no data collected)"),
-            p(style = "color: #e0e0e0; margin: 5px 0; font-size: 12px;",
-              "⚠ Check original data source for gaps > 24 hours")
+              tags$span("•", style = "color: #ff6b6b;"), " Red: Filled gaps (no data collected)")
           ),
           
           # Threat score explanation

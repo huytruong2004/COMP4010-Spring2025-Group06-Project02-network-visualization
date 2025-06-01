@@ -25,25 +25,13 @@ geographicUI <- function(id) {
             selected = "count"
           ),
           
-          # Color palette
-          selectInput(
-            ns("color_palette"),
-            "Color Palette",
-            choices = c(
-              "Threat (Plasma)" = "plasma",
-              "Geographic (Viridis)" = "viridis",
-              "Classic Security" = "security"
-            ),
-            selected = "plasma"
-          ),
-          
           # Filter controls
           hr(),
           h5("Filters", style = "color: #00d4ff;"),
-          sliderInput(
+          numericInput(
             ns("min_attacks"),
             "Minimum Attacks",
-            min = 1, max = 100, value = 1
+            value = 1, min = 1, max = 5000, step = 1
           )
         )
       ),
@@ -109,12 +97,8 @@ geographicServer <- function(id, data) {
     output$world_map <- renderPlotly({
       req(geo_data())
       
-      # Get color palette
-      palette_name <- switch(input$color_palette,
-        "plasma" = "plasma",
-        "viridis" = "viridis", 
-        "security" = "plasma"
-      )
+      # Use default color palette
+      palette_name <- "plasma"
       
       # Create choropleth
       metric_col <- input$metric
@@ -126,14 +110,20 @@ geographicServer <- function(id, data) {
         locationmode = "country names",
         z = ~get(metric_col),
         colorscale = palette_name,
-        hovertemplate = paste(
-          "<b>%{location}</b><br>",
-          "Attacks: %{customdata[0]}<br>",
-          "Avg Threat: %{customdata[1]:.2f}<br>",
-          "Volume: %{customdata[2]}<br>",
-          "<extra></extra>"
+        text = ~paste0(
+          "<b>", source_country, "</b><br>",
+          "Attacks: ", count, "<br>",
+          "Avg Threat: ", round(threat_score, 2), "<br>",
+          "Volume: ", scales::comma(volume)
         ),
-        customdata = ~cbind(count, threat_score, volume)
+        hoverinfo = "text",
+        colorbar = list(
+          title = switch(input$metric,
+            "count" = "Attack Count",
+            "threat_score" = "Threat Score", 
+            "volume" = "Data Volume"
+          )
+        )
       ) %>%
         layout(
           title = list(
@@ -194,49 +184,72 @@ geographicServer <- function(id, data) {
     # Value boxes
     output$total_countries <- renderValueBox({
       req(geo_data())
+      country_count <- nrow(geo_data())
       valueBox(
-        value = nrow(geo_data()),
+        value = country_count,
         subtitle = "Countries with Attacks",
         icon = icon("globe"),
-        color = "blue"
+        color = if(country_count == 0) "black" else "blue"
       )
     })
     
     output$top_threat_country <- renderValueBox({
       req(geo_data())
-      top_country <- geo_data() %>%
-        arrange(desc(threat_score)) %>%
-        slice(1) %>%
-        pull(source_country)
-      
-      valueBox(
-        value = top_country,
-        subtitle = "Highest Threat Country",
-        icon = icon("exclamation-triangle"),
-        color = "red"
-      )
+      if (nrow(geo_data()) == 0) {
+        valueBox(
+          value = "N/A",
+          subtitle = "Highest Threat Country",
+          icon = icon("exclamation-triangle"),
+          color = "black"
+        )
+      } else {
+        top_country <- geo_data() %>%
+          arrange(desc(threat_score)) %>%
+          slice(1) %>%
+          pull(source_country)
+        
+        valueBox(
+          value = top_country,
+          subtitle = "Highest Threat Country",
+          icon = icon("exclamation-triangle"),
+          color = "red"
+        )
+      }
     })
     
     output$total_attacks <- renderValueBox({
       req(geo_data())
-      total <- sum(geo_data()$count)
+      if (nrow(geo_data()) == 0) {
+        total <- 0
+      } else {
+        total <- sum(geo_data()$count)
+      }
       valueBox(
         value = scales::comma(total),
         subtitle = "Total Attacks",
         icon = icon("crosshairs"),
-        color = "orange"
+        color = if(total == 0) "black" else "orange"
       )
     })
     
     output$avg_threat <- renderValueBox({
       req(geo_data())
-      avg_threat <- mean(geo_data()$threat_score, na.rm = TRUE)
-      valueBox(
-        value = round(avg_threat, 2),
-        subtitle = "Average Threat Score",
-        icon = icon("shield-alt"),
-        color = if(avg_threat > 5) "red" else "green"
-      )
+      if (nrow(geo_data()) == 0) {
+        valueBox(
+          value = "N/A",
+          subtitle = "Average Threat Score",
+          icon = icon("shield-alt"),
+          color = "black"
+        )
+      } else {
+        avg_threat <- mean(geo_data()$threat_score, na.rm = TRUE)
+        valueBox(
+          value = round(avg_threat, 2),
+          subtitle = "Average Threat Score",
+          icon = icon("shield-alt"),
+          color = if(is.finite(avg_threat) && avg_threat > 5) "red" else "green"
+        )
+      }
     })
     
     

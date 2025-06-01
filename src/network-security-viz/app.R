@@ -244,35 +244,72 @@ server <- function(input, output, session) {
   
   output$overview_threat_level <- renderValueBox({
     req(filtered_data())
-    avg_threat <- mean(filtered_data()$threat_score, na.rm = TRUE)
-    valueBox(
-      value = round(avg_threat, 1),
-      subtitle = "Avg Threat Score",
-      icon = icon("shield-alt"),
-      color = if(avg_threat > 5) "red" else "green"
-    )
+    if (nrow(filtered_data()) == 0) {
+      valueBox(
+        value = "N/A",
+        subtitle = "Avg Threat Score",
+        icon = icon("shield-alt"),
+        color = "black"
+      )
+    } else {
+      avg_threat <- mean(filtered_data()$threat_score, na.rm = TRUE)
+      valueBox(
+        value = round(avg_threat, 1),
+        subtitle = "Avg Threat Score",
+        icon = icon("shield-alt"),
+        color = if(is.finite(avg_threat) && avg_threat > 5) "red" else "green"
+      )
+    }
   })
   
   output$overview_top_country <- renderValueBox({
     req(filtered_data())
-    top_country <- filtered_data()[, .N, by = source_country][order(-N)][1, source_country]
-    valueBox(
-      value = top_country,
-      subtitle = "Top Attack Origin",
-      icon = icon("flag"),
-      color = "blue"
-    )
+    if (nrow(filtered_data()) == 0) {
+      valueBox(
+        value = "N/A",
+        subtitle = "Top Attack Origin",
+        icon = icon("flag"),
+        color = "black"
+      )
+    } else {
+      country_counts <- filtered_data()[, .N, by = source_country][order(-N)]
+      if (nrow(country_counts) == 0) {
+        top_country <- "N/A"
+      } else {
+        top_country <- country_counts[1, source_country]
+      }
+      valueBox(
+        value = top_country,
+        subtitle = "Top Attack Origin",
+        icon = icon("flag"),
+        color = if(top_country == "N/A") "black" else "blue"
+      )
+    }
   })
   
   output$overview_top_port <- renderValueBox({
     req(filtered_data())
-    top_port <- filtered_data()[, .N, by = destination_port][order(-N)][1, destination_port]
-    valueBox(
-      value = top_port,
-      subtitle = "Most Targeted Port",
-      icon = icon("bullseye"),
-      color = "purple"
-    )
+    if (nrow(filtered_data()) == 0) {
+      valueBox(
+        value = "N/A",
+        subtitle = "Most Targeted Port",
+        icon = icon("bullseye"),
+        color = "black"
+      )
+    } else {
+      port_counts <- filtered_data()[, .N, by = destination_port][order(-N)]
+      if (nrow(port_counts) == 0) {
+        top_port <- "N/A"
+      } else {
+        top_port <- port_counts[1, destination_port]
+      }
+      valueBox(
+        value = top_port,
+        subtitle = "Most Targeted Port",
+        icon = icon("bullseye"),
+        color = if(top_port == "N/A") "black" else "purple"
+      )
+    }
   })
   
   output$overview_data_volume <- renderValueBox({

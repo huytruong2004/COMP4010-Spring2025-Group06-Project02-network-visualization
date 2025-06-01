@@ -316,8 +316,7 @@ body {
 
 .contrast-toggle:focus,
 .font-size-toggle:focus {
-  outline: 3px solid var(--warning);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Large font mode */
@@ -339,7 +338,6 @@ body {
   padding: 12px !important;
 }
 
-/* Enhanced Focus Styles for Keyboard Navigation */
 .btn:focus,
 .form-control:focus,
 .selectize-input.focus,
@@ -347,11 +345,7 @@ input[type="checkbox"]:focus,
 input[type="radio"]:focus,
 .sidebar-menu > li > a:focus,
 .nav-tabs > li > a:focus,
-.pagination > li > a:focus {
-  outline: 3px solid var(--warning) !important;
-  outline-offset: 2px !important;
-  z-index: 1000;
-  position: relative;
+pagination > li > a:focus {
 }
 
 /* Skip to content link for screen readers */
@@ -376,26 +370,24 @@ input[type="radio"]:focus,
 .dataTables_wrapper table.dataTable tbody tr:focus {
   background-color: var(--accent) !important;
   color: var(--bg-primary) !important;
-  outline: 2px solid var(--warning);
+  outline: none;
 }
 
 /* Enhanced keyboard navigation for network visualization */
 .vis-network:focus {
-  outline: 3px solid var(--warning);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Improve tab order visibility */
 .nav-tabs > li.active > a {
   background-color: var(--accent) !important;
   color: var(--bg-primary) !important;
-  border-bottom: 3px solid var(--warning) !important;
+  border-bottom: 3px solid var(--accent) !important;
 }
 
 /* Enhanced plotly accessibility */
 .plotly .modebar-btn:focus {
-  outline: 2px solid var(--warning) !important;
-  outline-offset: 1px !important;
+  outline: none !important;
 }
 
 /* Better visibility for form labels */
@@ -446,8 +438,7 @@ label {
 /* Better focus indication for interactive elements */
 [role="button"]:focus,
 [tabindex]:focus {
-  outline: 3px solid var(--warning) !important;
-  outline-offset: 2px !important;
+  outline: none !important;
 }
 
 /* Responsive Design */

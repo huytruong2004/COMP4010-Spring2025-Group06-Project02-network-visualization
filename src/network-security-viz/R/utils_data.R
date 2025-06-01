@@ -112,10 +112,33 @@ aggregate_geographic <- function(data) {
 # NETWORK ANALYSIS FUNCTIONS
 
 # Convert flat packet data to network structure
-create_network_data <- function(packet_data, max_nodes = 100) {
-  # Limit data for performance
-  top_ips <- packet_data[, .N, by = source_ip][order(-N)][1:min(max_nodes, .N)]
-  filtered_data <- packet_data[source_ip %in% top_ips$source_ip]
+create_network_data <- function(packet_data, max_nodes = NULL, top_ports_count = 20) {
+  # Handle empty data case
+  if (nrow(packet_data) == 0) {
+    return(list(
+      nodes = data.frame(id = integer(0), label = character(0), group = character(0), 
+                        value = numeric(0), color = character(0)),
+      edges = data.frame(from = integer(0), to = integer(0), width = numeric(0), color = character(0))
+    ))
+  }
+  
+  # Get top N ports by frequency
+  top_ports <- packet_data[, .N, by = destination_port][order(-N)][1:min(top_ports_count, .N)]
+  
+  # Filter data to only include traffic to these top ports
+  filtered_data <- packet_data[destination_port %in% top_ports$destination_port]
+  
+  # Handle case where filtered data is empty
+  if (nrow(filtered_data) == 0) {
+    return(list(
+      nodes = data.frame(id = integer(0), label = character(0), group = character(0), 
+                        value = numeric(0), color = character(0)),
+      edges = data.frame(from = integer(0), to = integer(0), width = numeric(0), color = character(0))
+    ))
+  }
+  
+  # Get all unique IPs that connect to these ports
+  unique_ips <- unique(filtered_data$source_ip)
   
   # Create IP nodes
   ip_nodes <- filtered_data[, .(
@@ -128,22 +151,13 @@ create_network_data <- function(packet_data, max_nodes = 100) {
   ip_nodes[, `:=`(
     id = .I,
     label = source_ip,
-    group = case_when(
-      attacks > 100 ~ "high_threat",
-      attacks > 50 ~ "medium_threat",
-      TRUE ~ "low_threat"
-    ),
+    group = "ip",  # Default group for IP nodes
     value = log10(attacks + 1) * 10,
-    color = case_when(
-      attacks > 100 ~ "#e74c3c",
-      attacks > 50 ~ "#f39c12", 
-      TRUE ~ "#27ae60"
-    )
+    color = "#e74c3c"  # Default color for IP nodes
   )]
   
-  # Create port nodes (top 20 ports)
-  top_ports <- filtered_data[, .N, by = destination_port][order(-N)][1:20]
-  port_nodes <- filtered_data[destination_port %in% top_ports$destination_port, .(
+  # Create port nodes (already filtered to top N ports)
+  port_nodes <- filtered_data[, .(
     connections = .N,
     unique_ips = uniqueN(source_ip)
   ), by = destination_port]
@@ -166,7 +180,6 @@ create_network_data <- function(packet_data, max_nodes = 100) {
   edges <- filtered_data[, .N, by = .(source_ip, destination_port)]
   edges <- merge(edges, ip_nodes[, .(source_ip, from = id)], by = "source_ip")
   edges[, to := destination_port + max(ip_nodes$id)]
-  edges[destination_port %in% top_ports$destination_port]
   
   edges[, `:=`(
     width = pmin(log10(N) * 2, 10),

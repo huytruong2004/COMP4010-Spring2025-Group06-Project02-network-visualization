@@ -209,43 +209,65 @@ timelineServer <- function(id, data) {
         value = scales::comma(total),
         subtitle = "Total Attacks",
         icon = icon("crosshairs"),
-        color = "blue"
+        color = if(total == 0) "black" else "blue"
       )
     })
     
     output$unique_attackers <- renderValueBox({
       req(filtered_data())
-      unique_ips <- filtered_data()[, uniqueN(source_ip)]
+      if (nrow(filtered_data()) == 0) {
+        unique_ips <- 0
+      } else {
+        unique_ips <- filtered_data()[, uniqueN(source_ip)]
+      }
       valueBox(
         value = scales::comma(unique_ips),
         subtitle = "Unique Attackers",
         icon = icon("users"),
-        color = "orange"
+        color = if(unique_ips == 0) "black" else "orange"
       )
     })
     
     output$avg_threat_level <- renderValueBox({
       req(filtered_data())
-      avg_threat <- mean(filtered_data()$threat_score, na.rm = TRUE)
-      valueBox(
-        value = round(avg_threat, 2),
-        subtitle = "Avg Threat Score",
-        icon = icon("shield-alt"),
-        color = if(avg_threat > 5) "red" else "green"
-      )
+      if (nrow(filtered_data()) == 0) {
+        valueBox(
+          value = "N/A",
+          subtitle = "Avg Threat Score",
+          icon = icon("shield-alt"),
+          color = "black"
+        )
+      } else {
+        avg_threat <- mean(filtered_data()$threat_score, na.rm = TRUE)
+        valueBox(
+          value = round(avg_threat, 2),
+          subtitle = "Avg Threat Score",
+          icon = icon("shield-alt"),
+          color = if(is.finite(avg_threat) && avg_threat > 5) "red" else "green"
+        )
+      }
     })
     
     output$time_span <- renderValueBox({
       req(filtered_data())
-      time_span <- as.numeric(difftime(max(filtered_data()$datetime), 
-                                      min(filtered_data()$datetime), 
-                                      units = "hours"))
-      valueBox(
-        value = paste(round(time_span, 1), "hrs"),
-        subtitle = "Time Span",
-        icon = icon("clock"),
-        color = "purple"
-      )
+      if (nrow(filtered_data()) == 0) {
+        valueBox(
+          value = "N/A",
+          subtitle = "Time Span",
+          icon = icon("clock"),
+          color = "black"
+        )
+      } else {
+        time_span <- as.numeric(difftime(max(filtered_data()$datetime), 
+                                        min(filtered_data()$datetime), 
+                                        units = "hours"))
+        valueBox(
+          value = paste(round(time_span, 1), "hrs"),
+          subtitle = "Time Span",
+          icon = icon("clock"),
+          color = "purple"
+        )
+      }
     })
     
     # Data table
@@ -281,7 +303,7 @@ timelineServer <- function(id, data) {
     observeEvent(input$threat_info, {
       showModal(modalDialog(
         title = div("Threat Score Calculation", style = "color: #00d4ff;"),
-        size = "m",
+        size = "l",
         tags$style("
           .modal-content {
             background-color: #1a1f3a !important;
@@ -294,6 +316,8 @@ timelineServer <- function(id, data) {
           .modal-body {
             background-color: #1a1f3a !important;
             color: #e0e0e0 !important;
+            max-height: 70vh !important;
+            overflow-y: auto !important;
           }
           .modal-footer {
             background-color: #0a0e27 !important;
@@ -317,7 +341,6 @@ timelineServer <- function(id, data) {
           }
         "),
         div(style = "color: #e0e0e0;",
-          h4("How Threat Scores are Calculated", style = "color: #00d4ff; margin-bottom: 20px;"),
           p("Threat scores range from 0 (low) to 10 (high) based on:"),
           tags$ul(style = "color: #e0e0e0;",
             tags$li(tags$span("High-Risk Ports (+3 points):", style = "color: #00d4ff; font-weight: bold;"), 
@@ -331,15 +354,17 @@ timelineServer <- function(id, data) {
           p("Examples:", style = "color: #00d4ff; font-weight: bold;"),
           tags$ul(style = "color: #e0e0e0;",
             tags$li("Attack on SSH port (22) with large packet: 3 + 2 = ", 
-                   tags$span("5 points", style="color: #f39c12; font-weight: bold;")),
-            tags$li("Attack on RDP port (3389) with normal packet: ", 
-                   tags$span("3 points", style="color: #f39c12; font-weight: bold;")),
-            tags$li("Attack on high port with small packet: ", 
-                   tags$span("1 point", style="color: #27ae60; font-weight: bold;"))
+                   tags$span("5 points", style="color: #f39c12; font-weight: bold;"))
           ),
           br(),
-          p(tags$span("Scores > 5", style="color: #e74c3c; font-weight: bold;"), 
-            " are considered high threat.", style = "color: #e0e0e0;")
+          p("How Threat Scores are Used:", style = "color: #00d4ff; font-weight: bold;"),
+          tags$ul(style = "color: #e0e0e0;",
+            tags$li(tags$span("IP Threat Scores:", style = "color: #00d4ff;"), 
+                   " Show the average threat level of all attacks from that IP address (e.g., 'This attacker typically targets high-risk services')"),
+            tags$li(tags$span("Port Threat Scores:", style = "color: #00d4ff;"), 
+                   " Show the average threat level of all attacks on that port (e.g., 'Attacks on this port tend to be more sophisticated')")
+          ),
+          br()
         ),
         footer = tagList(
           modalButton(

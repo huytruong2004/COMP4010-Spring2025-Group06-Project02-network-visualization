@@ -14,28 +14,54 @@ networkUI <- function(id) {
           h4("Network Controls", style = "color: #00d4ff;"),
           
           # Node filtering
-          sliderInput(
-            ns("min_connections"),
-            "Min Connections",
-            min = 1, max = 50, value = 5, step = 1
-          ),
-          
-          sliderInput(
-            ns("max_nodes"),
-            "Max Nodes",
-            min = 50, max = 200, value = 100, step = 10
-          ),
-          
-          # Simple clustering
           selectInput(
-            ns("cluster_by"),
-            "Group By",
+            ns("port_selection"),
+            "Show Ports",
             choices = c(
-              "None" = "none",
-              "Country" = "country",
-              "Threat Level" = "threat"
+              "Top 5 ports" = 5,
+              "Top 10 ports" = 10,
+              "Top 20 ports" = 20
             ),
-            selected = "country"
+            selected = 10
+          ),
+          
+          hr(),
+          
+          # Smart search
+          h5("Smart Search", style = "color: #00d4ff;"),
+          textInput(
+            ns("node_search"),
+            NULL,
+            placeholder = "Search IP, Port, or Country..."
+          ),
+          
+          # Filter chips
+          h6("Node Type", style = "color: #00d4ff; margin-top: 15px;"),
+          uiOutput(ns("node_type_filters")),
+          
+          h6("Threat Level", style = "color: #00d4ff; margin-top: 15px;"),
+          uiOutput(ns("threat_level_filters")),
+          
+          h6("Countries", style = "color: #00d4ff; margin-top: 15px;"),
+          selectizeInput(
+            ns("country_filter"),
+            NULL,
+            choices = NULL,
+            selected = NULL,
+            multiple = TRUE,
+            width = "100%",
+            options = list(
+              placeholder = "Select countries to filter...",
+              maxOptions = 1000
+            )
+          ),
+          
+          br(),
+          actionButton(
+            ns("clear_filters"),
+            "Clear All Filters",
+            class = "btn-sm btn-warning",
+            style = "width: 100%;"
           ),
           
           # Display options
@@ -43,24 +69,6 @@ networkUI <- function(id) {
             ns("show_labels"),
             "Show Labels",
             value = TRUE
-          ),
-          
-          # Physics controls (simplified)
-          hr(),
-          h5("Physics", style = "color: #00d4ff;"),
-          checkboxInput(
-            ns("physics_enabled"),
-            "Enable Physics",
-            value = TRUE
-          ),
-          
-          conditionalPanel(
-            condition = paste0("input['", ns("physics_enabled"), "']"),
-            sliderInput(
-              ns("repulsion"),
-              "Repulsion",
-              min = -500, max = -50, value = -150, step = 10
-            )
           )
         )
       ),
@@ -119,25 +127,69 @@ networkServer <- function(id, data) {
     # Reactive values
     values <- reactiveValues(
       selected_node = NULL,
-      network_data = NULL
+      network_data = NULL,
+      search_term = NULL,
+      filters = list(
+        node_types = c("ip", "port"),  # Both active by default
+        threat_levels = c("high", "medium", "low")  # All active by default
+      )
     )
     
     # Process network data
     network_data <- reactive({
       req(data())
       
-      # Filter by minimum connections and limit nodes
-      filtered_data <- data()[
-        source_ip %in% data()[, .N, by = source_ip][N >= input$min_connections, source_ip]
-      ]
+      # Create network structure showing selected number of top ports
+      net_data <- create_network_data(data(), max_nodes = NULL, top_ports_count = as.integer(input$port_selection))
       
-      # Create network structure with node limit
-      net_data <- create_network_data(filtered_data, max_nodes = input$max_nodes)
-      
-      # Apply simple clustering
-      if (input$cluster_by != "none") {
-        net_data$nodes <- apply_simple_clustering(net_data$nodes, filtered_data, input$cluster_by)
+      # Apply filters
+      if (!is.null(net_data$nodes) && nrow(net_data$nodes) > 0) {
+        # Filter by node type
+        type_filter <- rep(FALSE, nrow(net_data$nodes))
+        if ("ip" %in% values$filters$node_types) {
+          type_filter <- type_filter | net_data$nodes$group == "ip"
+        }
+        if ("port" %in% values$filters$node_types) {
+          type_filter <- type_filter | net_data$nodes$group == "port"
+        }
+        
+        # Filter by threat level (only for IP nodes)
+        threat_filter <- rep(TRUE, nrow(net_data$nodes))
+        for (i in 1:nrow(net_data$nodes)) {
+          if (net_data$nodes$group[i] == "ip") {
+            ip_threat <- data()[source_ip == net_data$nodes$label[i], mean(threat_score)]
+            threat_level <- if (ip_threat > 7) "high" else if (ip_threat > 4) "medium" else "low"
+            threat_filter[i] <- threat_level %in% values$filters$threat_levels
+          }
+        }
+        
+        # Filter by country (only for IP nodes)
+        country_filter <- rep(TRUE, nrow(net_data$nodes))
+        if (!is.null(input$country_filter) && length(input$country_filter) > 0) {
+          for (i in 1:nrow(net_data$nodes)) {
+            if (net_data$nodes$group[i] == "ip") {
+              ip_country <- data()[source_ip == net_data$nodes$label[i], unique(source_country)][1]
+              country_filter[i] <- ip_country %in% input$country_filter
+            }
+          }
+        }
+        
+        # Apply all filters
+        keep_nodes <- type_filter & threat_filter & country_filter
+        filtered_node_ids <- net_data$nodes$id[keep_nodes]
+        
+        # Filter nodes
+        net_data$nodes <- net_data$nodes[keep_nodes, ]
+        
+        # Filter edges to only include those between visible nodes
+        net_data$edges <- net_data$edges[
+          net_data$edges$from %in% filtered_node_ids & 
+          net_data$edges$to %in% filtered_node_ids, 
+        ]
       }
+      
+      # Apply coloring based on threat level
+      net_data$nodes <- apply_simple_clustering(net_data$nodes, data(), "threat")
       
       return(net_data)
     })
@@ -152,9 +204,7 @@ networkServer <- function(id, data) {
       # Create network
       vis <- visNetwork(nodes, edges) %>%
         visOptions(
-          highlightNearest = list(enabled = TRUE, degree = 1),
-          selectedBy = "group",
-          nodesIdSelection = TRUE
+          highlightNearest = list(enabled = TRUE, degree = 1)
         ) %>%
         visInteraction(
           navigationButtons = TRUE,
@@ -168,21 +218,17 @@ networkServer <- function(id, data) {
           }", session$ns("selected_node"))
         )
       
-      # Configure physics
-      if (input$physics_enabled) {
-        vis <- vis %>%
-          visPhysics(
-            enabled = TRUE,
-            barnesHut = list(
-              gravitationalConstant = input$repulsion,
-              springLength = 200,
-              damping = 0.09
-            ),
-            stabilization = list(iterations = 50)
-          )
-      } else {
-        vis <- vis %>% visPhysics(enabled = FALSE)
-      }
+      # Configure physics with fixed repulsion
+      vis <- vis %>%
+        visPhysics(
+          enabled = TRUE,
+          barnesHut = list(
+            gravitationalConstant = -500,
+            springLength = 200,
+            damping = 0.09
+          ),
+          stabilization = list(iterations = 50)
+        )
       
       # Configure labels
       if (!input$show_labels) {
@@ -203,24 +249,195 @@ networkServer <- function(id, data) {
         )
     })
     
+    # Generate node type filter buttons
+    output$node_type_filters <- renderUI({
+      div(
+        style = "display: flex; gap: 5px; flex-wrap: wrap;",
+        actionButton(
+          session$ns("filter_ip"), "IP",
+          class = paste("btn-xs", if("ip" %in% values$filters$node_types) "active" else ""),
+          style = paste0(
+            "background-color: ", if("ip" %in% values$filters$node_types) "#c0392b" else "#e74c3c", "; ",
+            "color: white; border: ", if("ip" %in% values$filters$node_types) "2px solid #fff" else "none", "; ",
+            "opacity: ", if("ip" %in% values$filters$node_types) "1" else "0.6", ";"
+          )
+        ),
+        actionButton(
+          session$ns("filter_port"), "Port",
+          class = paste("btn-xs", if("port" %in% values$filters$node_types) "active" else ""),
+          style = paste0(
+            "background-color: ", if("port" %in% values$filters$node_types) "#2980b9" else "#3498db", "; ",
+            "color: white; border: ", if("port" %in% values$filters$node_types) "2px solid #fff" else "none", "; ",
+            "opacity: ", if("port" %in% values$filters$node_types) "1" else "0.6", ";"
+          )
+        )
+      )
+    })
+    
+    # Generate threat level filter buttons
+    output$threat_level_filters <- renderUI({
+      div(
+        style = "display: flex; gap: 5px; flex-wrap: wrap;",
+        actionButton(
+          session$ns("filter_high"), "High",
+          class = paste("btn-xs", if("high" %in% values$filters$threat_levels) "active" else ""),
+          style = paste0(
+            "background-color: ", if("high" %in% values$filters$threat_levels) "#c0392b" else "#e74c3c", "; ",
+            "color: white; border: ", if("high" %in% values$filters$threat_levels) "2px solid #fff" else "none", "; ",
+            "opacity: ", if("high" %in% values$filters$threat_levels) "1" else "0.6", ";"
+          )
+        ),
+        actionButton(
+          session$ns("filter_medium"), "Medium",
+          class = paste("btn-xs", if("medium" %in% values$filters$threat_levels) "active" else ""),
+          style = paste0(
+            "background-color: ", if("medium" %in% values$filters$threat_levels) "#d68910" else "#f39c12", "; ",
+            "color: white; border: ", if("medium" %in% values$filters$threat_levels) "2px solid #fff" else "none", "; ",
+            "opacity: ", if("medium" %in% values$filters$threat_levels) "1" else "0.6", ";"
+          )
+        ),
+        actionButton(
+          session$ns("filter_low"), "Low",
+          class = paste("btn-xs", if("low" %in% values$filters$threat_levels) "active" else ""),
+          style = paste0(
+            "background-color: ", if("low" %in% values$filters$threat_levels) "#1e8449" else "#27ae60", "; ",
+            "color: white; border: ", if("low" %in% values$filters$threat_levels) "2px solid #fff" else "none", "; ",
+            "opacity: ", if("low" %in% values$filters$threat_levels) "1" else "0.6", ";"
+          )
+        )
+      )
+    })
+    
+    # Populate country dropdown
+    observe({
+      req(data())
+      
+      # Get all countries sorted by attack count
+      all_countries <- data()[, .(count = .N), by = source_country][order(-count)]
+      
+      # Handle empty data case
+      if (nrow(all_countries) == 0) {
+        country_choices <- character(0)
+      } else {
+        # Create choices with attack counts
+        country_choices <- setNames(
+          all_countries$source_country,
+          paste0(all_countries$source_country, " (", scales::comma(all_countries$count), ")")
+        )
+      }
+      
+      updateSelectizeInput(
+        session,
+        "country_filter",
+        choices = country_choices,
+        selected = character(0),
+        server = TRUE
+      )
+    })
+    
+    # Node type filters
+    observeEvent(input$filter_ip, {
+      if ("ip" %in% values$filters$node_types) {
+        values$filters$node_types <- setdiff(values$filters$node_types, "ip")
+      } else {
+        values$filters$node_types <- c(values$filters$node_types, "ip")
+      }
+    })
+    
+    observeEvent(input$filter_port, {
+      if ("port" %in% values$filters$node_types) {
+        values$filters$node_types <- setdiff(values$filters$node_types, "port")
+      } else {
+        values$filters$node_types <- c(values$filters$node_types, "port")
+      }
+    })
+    
+    # Threat level filters
+    observeEvent(input$filter_high, {
+      if ("high" %in% values$filters$threat_levels) {
+        values$filters$threat_levels <- setdiff(values$filters$threat_levels, "high")
+      } else {
+        values$filters$threat_levels <- c(values$filters$threat_levels, "high")
+      }
+    })
+    
+    observeEvent(input$filter_medium, {
+      if ("medium" %in% values$filters$threat_levels) {
+        values$filters$threat_levels <- setdiff(values$filters$threat_levels, "medium")
+      } else {
+        values$filters$threat_levels <- c(values$filters$threat_levels, "medium")
+      }
+    })
+    
+    observeEvent(input$filter_low, {
+      if ("low" %in% values$filters$threat_levels) {
+        values$filters$threat_levels <- setdiff(values$filters$threat_levels, "low")
+      } else {
+        values$filters$threat_levels <- c(values$filters$threat_levels, "low")
+      }
+    })
+    
+    # Clear all filters
+    observeEvent(input$clear_filters, {
+      values$filters$node_types <- c("ip", "port")
+      values$filters$threat_levels <- c("high", "medium", "low")
+      updateSelectizeInput(session, "country_filter", selected = character(0))
+      updateTextInput(session, "node_search", value = "")
+    })
+    
+    # Enhanced search functionality
+    observeEvent(input$node_search, {
+      if (nzchar(input$node_search)) {
+        search_term <- trimws(input$node_search)
+        
+        # Get network data
+        net_data <- network_data()
+        if (!is.null(net_data)) {
+          # Search in labels and apply as additional filter
+          matching_nodes <- net_data$nodes[
+            grepl(search_term, net_data$nodes$label, ignore.case = TRUE) |
+            grepl(search_term, net_data$nodes$group, ignore.case = TRUE), 
+            "id"
+          ]
+          
+          if (length(matching_nodes) > 0) {
+            # Select and focus on the first matching node
+            visNetworkProxy(session$ns("network_plot")) %>%
+              visSelectNodes(id = matching_nodes[1]) %>%
+              visFocus(id = matching_nodes[1], scale = 1)
+          }
+        }
+      }
+    })
+    
     # Value boxes
     output$total_nodes <- renderValueBox({
-      req(network_data())
+      net_data <- network_data()
+      if (is.null(net_data) || nrow(net_data$nodes) == 0) {
+        node_count <- 0
+      } else {
+        node_count <- nrow(net_data$nodes)
+      }
       valueBox(
-        value = nrow(network_data()$nodes),
+        value = node_count,
         subtitle = "Network Nodes",
         icon = icon("circle"),
-        color = "blue"
+        color = if(node_count == 0) "black" else "blue"
       )
     })
     
     output$total_edges <- renderValueBox({
-      req(network_data())
+      net_data <- network_data()
+      if (is.null(net_data) || nrow(net_data$edges) == 0) {
+        edge_count <- 0
+      } else {
+        edge_count <- nrow(net_data$edges)
+      }
       valueBox(
-        value = nrow(network_data()$edges),
+        value = edge_count,
         subtitle = "Connections",
         icon = icon("link"),
-        color = "green"
+        color = if(edge_count == 0) "black" else "green"
       )
     })
     
@@ -228,7 +445,7 @@ networkServer <- function(id, data) {
       req(data())
       top_ip <- data()[, .N, by = source_ip][order(-N)][1, source_ip]
       valueBox(
-        value = substr(top_ip, 1, 12),
+        value = top_ip,
         subtitle = "Top Attacker IP",
         icon = icon("crosshairs"),
         color = "red"
@@ -236,17 +453,30 @@ networkServer <- function(id, data) {
     })
     
     output$network_density <- renderValueBox({
-      req(network_data())
-      nodes_count <- nrow(network_data()$nodes)
-      edges_count <- nrow(network_data()$edges)
-      max_edges <- nodes_count * (nodes_count - 1)
-      density <- round((edges_count / max_edges) * 100, 1)
+      net_data <- network_data()
+      if (is.null(net_data) || nrow(net_data$nodes) == 0) {
+        density_text <- "N/A"
+        color <- "black"
+      } else {
+        nodes_count <- nrow(net_data$nodes)
+        edges_count <- nrow(net_data$edges)
+        max_edges <- nodes_count * (nodes_count - 1)
+        
+        if (max_edges == 0) {
+          density_text <- "N/A"
+          color <- "black"
+        } else {
+          density <- round((edges_count / max_edges) * 100, 1)
+          density_text <- paste0(density, "%")
+          color <- "purple"
+        }
+      }
       
       valueBox(
-        value = paste0(density, "%"),
+        value = density_text,
         subtitle = "Network Density",
         icon = icon("project-diagram"),
-        color = "purple"
+        color = color
       )
     })
     
@@ -264,7 +494,7 @@ networkServer <- function(id, data) {
       }
       
       # Get the actual attack count from the data
-      attack_count <- if (startsWith(node_info$label, "1") || startsWith(node_info$label, "2")) {
+      attack_count <- if (node_info$group == "ip") {
         nrow(data()[source_ip == node_info$label])
       } else {
         # For port nodes
@@ -277,7 +507,7 @@ networkServer <- function(id, data) {
         p(paste("Attacks:", attack_count)),
         
         # Show related traffic if it's an IP node
-        if (startsWith(node_info$label, "1") || startsWith(node_info$label, "2")) {
+        if (node_info$group == "ip") {
           req(data())
           related_traffic <- data()[source_ip == node_info$label]
           
@@ -289,7 +519,7 @@ networkServer <- function(id, data) {
               p(paste("Data Volume:", scales::comma(sum(related_traffic$length)), "bytes"))
             )
           }
-        } else if (startsWith(node_info$label, "Port")) {
+        } else if (node_info$group == "port") {
           # Show details for port nodes
           req(data())
           port_num <- as.integer(gsub("Port ", "", node_info$label))
@@ -313,13 +543,26 @@ networkServer <- function(id, data) {
 
 # Helper function for simple clustering
 apply_simple_clustering <- function(nodes, data, cluster_by) {
-  if (cluster_by == "country") {
+  # Handle empty nodes
+  if (nrow(nodes) == 0) {
+    return(nodes)
+  }
+  
+  if (cluster_by == "none") {
+    # Default coloring by node type
+    for (i in 1:nrow(nodes)) {
+      if (nodes$group[i] == "port") {
+        nodes$color[i] <- "#3498db"  # Blue for ports
+      } else {
+        nodes$color[i] <- "#e74c3c"  # Red for IPs
+      }
+    }
+  } else if (cluster_by == "country") {
     # Group nodes by country for IP nodes
     for (i in 1:nrow(nodes)) {
-      if (startsWith(nodes$label[i], "1") || startsWith(nodes$label[i], "2")) {
+      if (nodes$group[i] == "ip") {
         ip_country <- data[source_ip == nodes$label[i], unique(source_country)][1]
         if (!is.na(ip_country)) {
-          nodes$group[i] <- ip_country
           # Assign colors based on country
           nodes$color[i] <- switch(substr(ip_country, 1, 2),
             "US" = "#3498db",
@@ -334,18 +577,15 @@ apply_simple_clustering <- function(nodes, data, cluster_by) {
   } else if (cluster_by == "threat") {
     # Group nodes by threat level for IP nodes
     for (i in 1:nrow(nodes)) {
-      if (startsWith(nodes$label[i], "1") || startsWith(nodes$label[i], "2")) {
+      if (nodes$group[i] == "ip") {
         ip_threat <- data[source_ip == nodes$label[i], mean(threat_score)]
-        if (!is.na(ip_threat)) {
+        if (!is.na(ip_threat) && length(ip_threat) > 0) {
           if (ip_threat > 7) {
-            nodes$group[i] <- "high_threat"
-            nodes$color[i] <- "#e74c3c"
+            nodes$color[i] <- "#e74c3c"  # High threat - red
           } else if (ip_threat > 4) {
-            nodes$group[i] <- "medium_threat"
-            nodes$color[i] <- "#f39c12"
+            nodes$color[i] <- "#f39c12"  # Medium threat - orange
           } else {
-            nodes$group[i] <- "low_threat"
-            nodes$color[i] <- "#27ae60"
+            nodes$color[i] <- "#27ae60"  # Low threat - green
           }
         }
       }

@@ -49,6 +49,26 @@ timelineUI <- function(id) {
             min = 0, max = 10, value = 0, step = 1
           ),
           
+          # Gap handling option
+          checkboxInput(
+            ns("fill_gaps"),
+            "Fill data gaps with zeros",
+            value = TRUE
+          ),
+          
+          # Data quality info
+          br(),
+          div(
+            style = "background-color: #2a2f4a; padding: 10px; border-radius: 5px; border-left: 3px solid #f39c12;",
+            h5("Data Quality Legend", style = "color: #f39c12; margin-top: 0;"),
+            p(style = "color: #e0e0e0; margin: 5px 0;", 
+              tags$span("•", style = "color: #00d4ff;"), " Blue: Actual data points"),
+            p(style = "color: #e0e0e0; margin: 5px 0;", 
+              tags$span("•", style = "color: #ff6b6b;"), " Red: Filled gaps (no data collected)"),
+            p(style = "color: #e0e0e0; margin: 5px 0; font-size: 12px;",
+              "⚠ Check original data source for gaps > 24 hours")
+          ),
+          
           # Threat score explanation
           br(),
           actionButton(
@@ -146,7 +166,7 @@ timelineServer <- function(id, data) {
     # Aggregated time series data
     timeline_data <- reactive({
       req(filtered_data())
-      aggregate_timeseries(filtered_data(), input$time_interval)
+      aggregate_timeseries(filtered_data(), input$time_interval, fill_gaps = input$fill_gaps)
     })
     
     # Timeline chart
@@ -175,13 +195,23 @@ timelineServer <- function(id, data) {
       # Add column with dynamic name
       ts_matrix[[metric_name]] <- ts_data[[metric_col]]
       
+      # Add data quality indicator if available
+      if ("data_available" %in% names(ts_data)) {
+        # Create separate series for filled gaps (when data_available = FALSE)
+        ts_matrix[[paste(metric_name, "(No Data)")]] <- ifelse(
+          ts_data$data_available == FALSE & input$fill_gaps, 
+          ts_data[[metric_col]], 
+          NA
+        )
+      }
+      
       # Create dygraph
       dygraph(ts_matrix, main = paste("Timeline:", metric_name)) %>%
         dyOptions(
           fillGraph = TRUE,
           fillAlpha = 0.3,
           drawGrid = TRUE,
-          colors = "#00d4ff",
+          colors = if ("data_available" %in% names(ts_data)) c("#00d4ff", "#ff6b6b") else "#00d4ff",
           gridLineColor = "#2a2f4a",
           axisLineColor = "#e0e0e0",
           axisLabelColor = "#a0a0a0"
@@ -274,19 +304,40 @@ timelineServer <- function(id, data) {
     output$timeline_table <- DT::renderDataTable({
       req(timeline_data())
       
-      timeline_data() %>%
-        mutate(
-          datetime = format(datetime, "%Y-%m-%d %H:%M"),
-          total_bytes = scales::comma(total_bytes),
-          avg_threat_score = round(avg_threat_score, 2)
-        ) %>%
-        rename(
-          DateTime = datetime,
-          `Attack Count` = packet_count,
-          `Data Volume` = total_bytes,
-          `Unique IPs` = unique_ips,
-          `Avg Threat` = avg_threat_score
-        )
+      table_data <- timeline_data()
+      
+      # Format data for display
+      if ("data_available" %in% names(table_data)) {
+        table_data %>%
+          mutate(
+            datetime = format(datetime, "%Y-%m-%d %H:%M"),
+            total_bytes = scales::comma(total_bytes),
+            avg_threat_score = round(avg_threat_score, 2),
+            data_status = ifelse(data_available, "✓ Data", "⚠ Filled")
+          ) %>%
+          rename(
+            DateTime = datetime,
+            `Attack Count` = packet_count,
+            `Data Volume` = total_bytes,
+            `Unique IPs` = unique_ips,
+            `Avg Threat` = avg_threat_score,
+            `Status` = data_status
+          )
+      } else {
+        table_data %>%
+          mutate(
+            datetime = format(datetime, "%Y-%m-%d %H:%M"),
+            total_bytes = scales::comma(total_bytes),
+            avg_threat_score = round(avg_threat_score, 2)
+          ) %>%
+          rename(
+            DateTime = datetime,
+            `Attack Count` = packet_count,
+            `Data Volume` = total_bytes,
+            `Unique IPs` = unique_ips,
+            `Avg Threat` = avg_threat_score
+          )
+      }
     }, 
     options = list(
       pageLength = 15,

@@ -71,30 +71,78 @@ calculate_threat_score <- function(port, protocol, length) {
 
 # DATA AGGREGATION (SIMPLIFIED)
 
-# Aggregate data for time series
-aggregate_timeseries <- function(data, interval = "hour") {
+# Aggregate data for time series with complete time sequence
+aggregate_timeseries <- function(data, interval = "hour", fill_gaps = TRUE) {
+  # Handle empty data
+  if (nrow(data) == 0) {
+    return(data.table(
+      datetime = as.POSIXct(character(0)),
+      packet_count = integer(0),
+      total_bytes = integer(0),
+      unique_ips = integer(0),
+      avg_threat_score = numeric(0),
+      data_available = logical(0)
+    ))
+  }
+  
+  # Aggregate existing data
   result <- switch(interval,
     "hour" = data[, .(
       packet_count = .N,
       total_bytes = sum(length),
       unique_ips = uniqueN(source_ip),
-      avg_threat_score = mean(threat_score)
+      avg_threat_score = mean(threat_score),
+      data_available = TRUE
     ), by = .(datetime = as.POSIXct(format(datetime, "%Y-%m-%d %H:00:00")))],
     
     "day" = data[, .(
       packet_count = .N,
       total_bytes = sum(length),
       unique_ips = uniqueN(source_ip),
-      avg_threat_score = mean(threat_score)
+      avg_threat_score = mean(threat_score),
+      data_available = TRUE
     ), by = .(datetime = as.Date(datetime))],
     
     "minute" = data[, .(
       packet_count = .N,
       total_bytes = sum(length),
       unique_ips = uniqueN(source_ip),
-      avg_threat_score = mean(threat_score)
+      avg_threat_score = mean(threat_score),
+      data_available = TRUE
     ), by = .(datetime = as.POSIXct(format(datetime, "%Y-%m-%d %H:%M:00")))]
   )
+  
+  # Fill gaps if requested
+  if (fill_gaps && nrow(result) > 0) {
+    # Create complete time sequence
+    min_time <- min(result$datetime)
+    max_time <- max(result$datetime)
+    
+    complete_sequence <- switch(interval,
+      "hour" = seq(from = min_time, to = max_time, by = "hour"),
+      "day" = seq(from = min_time, to = max_time, by = "day"),
+      "minute" = seq(from = min_time, to = max_time, by = "min")
+    )
+    
+    # Convert to data.table for day interval
+    if (interval == "day") {
+      complete_dt <- data.table(datetime = as.Date(complete_sequence))
+    } else {
+      complete_dt <- data.table(datetime = complete_sequence)
+    }
+    
+    # Left join with aggregated data
+    result <- merge(complete_dt, result, by = "datetime", all.x = TRUE)
+    
+    # Fill NAs with appropriate values
+    result[is.na(packet_count), `:=`(
+      packet_count = 0,
+      total_bytes = 0,
+      unique_ips = 0,
+      avg_threat_score = NA_real_,  # Keep NA for periods with no data
+      data_available = FALSE
+    )]
+  }
   
   return(result[order(datetime)])
 }

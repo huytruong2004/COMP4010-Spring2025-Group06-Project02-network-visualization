@@ -101,10 +101,12 @@ The example of upcoming CSV is in [here](./src/parser/output.csv).
    ```
    
    This will automatically install all required packages including:
-   - `shiny`, `shinydashboard`, `shinyWidgets` - Dashboard framework
-   - `tidyverse`, `data.table`, `lubridate` - Data manipulation
-   - `visNetwork`, `dygraphs`, `plotly` - Advanced visualizations
-   - `DT`, `viridis`, `shinycssloaders` - Supporting packages
+   - `shiny`, `shinydashboard` - Dashboard framework
+   - `data.table`, `dplyr`, `ggplot2`, `scales` - Data manipulation & visualization
+   - `visNetwork` - Interactive network graphs showing IP-to-port attack relationships
+   - `dygraphs` - Time-series charts with zoom/pan for timeline analysis
+   - `plotly` - Interactive world map choropleth for geographic analysis
+   - `DT`, `viridis` - Tables and color palettes
 
 3. **Run the application:**
    ```bash
